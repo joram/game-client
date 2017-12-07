@@ -1,0 +1,5 @@
+#!/bin/bash
+#? Run app locally
+
+cd ./app
+npm start

@@ -1,0 +1,5 @@
+#!/bin/bash
+#? Setup local dev env
+
+cd app
+npm install
