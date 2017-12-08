@@ -1,3 +1,8 @@
 scripts/.env
+
+# editor
 .idea*
+
+# big binaries and libs
 build*
+app/node_modules*
