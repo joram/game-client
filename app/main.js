@@ -1,6 +1,20 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
+var PROTO_PATH = __dirname + '/../../game-server/pb/game-server.proto';
+var grpc = require('grpc');
+var protoLoader = require('@grpc/proto-loader');
+// // Suggested options for similarity to existing grpc.load behavior
+// var packageDefinition = protoLoader.loadSync(
+//     PROTO_PATH,
+//     {keepCase: true,
+//       longs: String,
+//       enums: String,
+//       defaults: true,
+//       oneofs: true
+//     });
+// var protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -19,6 +33,7 @@ function createWindow () {
 
   // Open the DevTools.
   win.webContents.openDevTools()
+  console.log(PROTO_PATH);
 
   // Emitted when the window is closed.
   win.on('closed', () => {
