@@ -2,24 +2,36 @@ import React from 'react';
 import './App.css';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 
-function Square(props) {
-    let p = props.pixel
-    let s = props.size
-    let x = p.x
-    let y = p.y
+class Square extends React.Component {
+    
+    isSolid(){
 
-  return <div style={{
-      "position":"absolute",
-      "width": s+"px",
-      "height": s+"px",
-      "border": "solid thin black",
-      'left':s*x+props.offsetX+"px",
-      'top':s*y+props.offsetY+"px",
-      "backgroundColor": "rgb("+p.r+", "+p.g+", "+p.b+")"
-  }}>
-      ({p.x}, {p.y})
+        return this.props.pixel.g > 180
+    }
+
+    render() {
+        let p = this.props.pixel
+        let s = this.props.size
+        let x = p.x
+        let y = p.y
+        let color = `rgb(${p.r}, 0, ${p.b})`
+        if (this.isSolid()) {
+            color = `rgb(0, 80, 0)`
+        }
+
+      return <div style={{
+          "position":"absolute",
+          "width": s+"px",
+          "height": s+"px",
+          "border": "solid thin black",
+          'left':s*x+this.props.offsetX+"px",
+          'top':s*y+this.props.offsetY+"px",
+          "backgroundColor": color
+      }}>
+      {/*({p.x}, {p.y})*/}
       {/*({p.r}, {p.g}, {p.b})</>;*/}
-  </div>
+      </div>
+}
 }
 
 function Circle(props) {
@@ -58,9 +70,9 @@ class Squares extends React.Component {
         let squaresTall = Math.ceil(window.innerHeight/size);
         let squaresWide = Math.ceil(window.innerWidth/size);
         let x1 = this.props.playerPosition.x - Math.floor(squaresWide/2)
-        let x2 = this.props.playerPosition.x + Math.ceil(squaresWide/2)
+        let x2 = this.props.playerPosition.x + Math.ceil(squaresWide/2) + 2
         let y1 = this.props.playerPosition.y - Math.floor(squaresTall/2)
-        let y2 = this.props.playerPosition.y + Math.ceil(squaresTall/2)
+        let y2 = this.props.playerPosition.y + Math.ceil(squaresTall/2) + 2
         let url = `http://localhost:2303/pixels?x1=${x1-1}&y1=${y1}&x2=${x2}&y2=${y2+1}`
         fetch(url)
             .then(res => res.json())
