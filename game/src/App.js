@@ -3,9 +3,8 @@ import './App.css';
 import KeyboardEventHandler from 'react-keyboard-event-handler';
 
 class Square extends React.Component {
-    
-    isSolid(){
 
+    isSolid(){
         return this.props.pixel.g > 180
     }
 
@@ -14,7 +13,7 @@ class Square extends React.Component {
         let s = this.props.size
         let x = p.x
         let y = p.y
-        let color = `rgb(${p.r}, 0, ${p.b})`
+        let color = `rgb(${p.r}, ${p.g}, ${p.b})`
         if (this.isSolid()) {
             color = `rgb(0, 80, 0)`
         }
@@ -60,10 +59,8 @@ class Squares extends React.Component {
     updateSquares() {
         if (this.props.playerPosition.x === this.state.playerPosition.x &&
             this.props.playerPosition.y === this.state.playerPosition.y){
-            console.log("already updated", this.state.playerPosition, this.props.playerPosition)
             return
         }
-        console.log("updating", this.state.playerPosition, this.props.playerPosition)
 
 
         let size = 50;
@@ -77,33 +74,45 @@ class Squares extends React.Component {
         fetch(url)
             .then(res => res.json())
             .then(pixels => {
+                let size = 50;
+                let squaresTall = Math.ceil(window.innerHeight/size);
+                let squaresWide = Math.ceil(window.innerWidth/size);
+                let x1 = this.props.playerPosition.x - Math.floor(squaresWide/2)
+                let y1 = this.props.playerPosition.y - Math.floor(squaresTall/2)
+
+                let squares = [];
+                this.state.pixels.forEach(pixel => {
+                    squares.push(<Square
+                        position={pixel}
+                        key={pixel.x+"_"+pixel.y}
+                        size={size}
+                        pixel={pixel}
+                        offsetX={-x1*size}
+                        offsetY={(-y1-1)*size}
+                    />)
+                })
+
                 let state = this.state
                 state.pixels = pixels
-                console.log("setting position", this.props.playerPosition)
+                state.squares = squares
                 state.playerPosition.x = this.props.playerPosition.x
                 state.playerPosition.y = this.props.playerPosition.y
                 this.setState(state)
             });
     }
 
+    isSolidAt(position){
+        let isSolid = false;
+        this.state.pixels.forEach((p) => {
+            if (p.x === position.x && p.y === position.y ){
+                isSolid = p.g > 180
+            }
+        })
+        return isSolid
+    }
+
     render() {
         this.updateSquares()
-        let size = 50;
-        let squaresTall = Math.ceil(window.innerHeight/size);
-        let squaresWide = Math.ceil(window.innerWidth/size);
-        let x1 = this.props.playerPosition.x - Math.floor(squaresWide/2)
-        let y1 = this.props.playerPosition.y - Math.floor(squaresTall/2)
-
-        let squares = [];
-        this.state.pixels.forEach(pixel => {
-            squares.push(<Square
-                key={pixel.x+"_"+pixel.y}
-                size={size}
-                pixel={pixel}
-                offsetX={-x1*size}
-                offsetY={(-y1-1)*size}
-            />)
-        })
 
         return (
             <div style={{
@@ -113,7 +122,7 @@ class Squares extends React.Component {
                 width:"100%",
                 height:"100%",
             }}>
-                {squares}
+                {this.state.squares}
             </div>
         );
     }
@@ -124,30 +133,40 @@ class App extends React.Component {
         playerPosition: {x: 10, y: 10}
     }
 
+    constructor(props) {
+        super(props);
+        this.squares = React.createRef();
+    }
     render() {
         let size = 50;
         let squaresTall = Math.floor(window.innerHeight / size);
         let squaresWide = Math.floor(window.innerWidth / size);
         return <div>
             <Circle x={Math.floor(squaresWide / 2)} y={Math.floor(squaresTall / 2)} size={size}/>
-            <Squares playerPosition={this.state.playerPosition}/>
+            <Squares playerPosition={this.state.playerPosition}  ref={this.squares}/>
             <KeyboardEventHandler
                 handleKeys={["left", "right", "up", "down", "w", "a", "s", "d"]}
                 onKeyEvent={(key, e) => {
-                    let state = this.state
+                    let nextPlayerPosition = {x:this.state.playerPosition.x, y: this.state.playerPosition.y}
                     if (key === "left" || key === "a") {
-                        state.playerPosition.x -= 1
+                        nextPlayerPosition.x -= 1
                     }
                     if (key === "right" || key === "d") {
-                        state.playerPosition.x += 1
+                        nextPlayerPosition.x += 1
                     }
                     if (key === "up" || key === "w") {
-                        state.playerPosition.y -= 1
+                        nextPlayerPosition.y -= 1
                     }
                     if (key === "down" || key === "s") {
-                        state.playerPosition.y += 1
+                        nextPlayerPosition.y += 1
                     }
-                    this.setState(state)
+
+                    let isSolid = this.squares.current.isSolidAt(nextPlayerPosition)
+                    if(!isSolid){
+                        let state = this.state
+                        state.playerPosition = nextPlayerPosition
+                        this.setState(state)
+                    }
                 }}/>
         </div>;
     }
