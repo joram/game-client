@@ -1,30 +1,5 @@
-#!/bin/bash
-#? Build Distributable Binaries
-
-function build_app() {
-  NAME=$1
-  APP_PATH=$2
-  BUILD_DIR=./build/$NAME
-  ELECTRON_ZIP="./build/bin/electron_$NAME.zip"
-  ELECTRON_ZIP_URL="https://github.com/electron/electron/releases/download/$ELECTRON_VERSION/electron-$ELECTRON_VERSION-$NAME.zip"
-  echo "building $NAME..."
-  echo $ELECTRON_ZIP_URL
-
-  mkdir -p ./build
-  mkdir -p ./build/bin
-  mkdir -p $BUILD_DIR
-
-  if [ ! -f $ELECTRON_ZIP ]; then
-    wget $ELECTRON_ZIP_URL -O $ELECTRON_ZIP
-  fi
-
-  unzip -qo $ELECTRON_ZIP -d $BUILD_DIR
-  cp -r ./app $BUILD_DIR/$APP_PATH
-}
-
-
-
-ELECTRON_VERSION="v1.8.2-beta.1"
-build_app linux-x64 resources
-build_app darwin-x64 Electron.app/Contents/Resources
-build_app win32-x64 resources
+cd game
+npm run-script build --production --falasdfa
+rm -r ../../game-server/static/static
+rm ../../game-server/static/precache-*
+mv ./build/* ../../game-server/static -f
