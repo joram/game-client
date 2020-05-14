@@ -48,7 +48,7 @@ class Player extends React.Component {
             nextPlayerPosition = move(nextPlayerPosition, key, 1)
         }
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
-        let isSolid = this.props.squares.current.isSolidAt(nextPlayerPosition)
+        let isSolid = this.props.chunks.current.isSolidAt(nextPlayerPosition)
 
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
         if(["left", "a", "up", "w"].includes(key)) {
@@ -75,7 +75,6 @@ class Player extends React.Component {
             let as = this.props.app.state;
             as.playerPosition = nextPlayerPosition
             this.props.app.setState(as)
-            this.props.app.setPlayerPosition(nextPlayerPosition)
         }
     }
 
