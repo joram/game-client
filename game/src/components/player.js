@@ -22,6 +22,31 @@ class Player extends React.Component {
         nextPlayerPosition: {x: 0, y: 0}
     }
 
+    ws = new WebSocket("ws://localhost:2303/objects")
+
+    sendPlayerCoordinates(){
+        let s = `{"x":"${this.state.playerPosition.x}", "y":"${this.state.playerPosition.y}"}`
+        console.log(s)
+        this.ws.send(s)
+    }
+
+    componentDidMount() {
+        this.ws.onopen = () => {
+            // on connecting, do nothing but log it to the console
+            console.log('connected to objects ws')
+            this.sendPlayerCoordinates()
+        }
+
+        this.ws.onmessage = evt => {
+            // on receiving a message, add it to the list of messages
+            const message = JSON.parse(evt.data)
+            this.props.objectEventBus.emit("object-update", null, message)
+        }
+
+        this.ws.onclose = () => {
+            console.log('disconnected')
+        }
+    }
 
     movePlayer(key, e) {
         let offset = 0.2
@@ -73,6 +98,8 @@ class Player extends React.Component {
             let as = this.props.app.state;
             as.playerPosition = nextPlayerPosition
             this.props.app.setState(as)
+
+            this.sendPlayerCoordinates()
         }
     }
 

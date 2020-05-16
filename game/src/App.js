@@ -97,6 +97,7 @@ class App extends React.Component {
         super(props);
         this.chunks = React.createRef();
         this.player = React.createRef();
+        this.objectEventBus = require('js-event-bus')();
     }
 
     playerPosition() {
@@ -109,8 +110,8 @@ class App extends React.Component {
     render() {
         let size = 50;
         return <div>
-            <Player size={size} chunks={this.chunks} ref={this.player} app={this} />
-            <Chunks size={size} ref={this.chunks} app={this} />
+            <Player size={size} chunks={this.chunks} ref={this.player} app={this} objectEventBus={this.objectEventBus} />
+            <Chunks size={size} ref={this.chunks} app={this} objectEventBus={this.objectEventBus} />
             <Chat/>
         </div>;
     }

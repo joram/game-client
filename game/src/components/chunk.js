@@ -2,12 +2,30 @@ import React from "react";
 
 class GameObject extends React.Component {
 
+    state = {
+        object: {x:0, y:0}
+    }
+
     isSolid(){
         return this.props.object.solid
     }
 
+    constructor(props) {
+        super(props);
+
+        this.state.object = props.object
+
+        props.objectEventBus.on("object-update", object => {
+            if(this.props.id === object.id){
+                let state = this.state
+                state.object = object
+                this.setState(state)
+            }
+        })
+
+    }
     render() {
-        let p = this.props.object
+        let p = this.state.object
         let s = this.props.size
         let x = p.x
         let y = p.y
@@ -20,7 +38,7 @@ class GameObject extends React.Component {
             left:s*(x-this.props.chunkPosition.x)+"px",
             top:s*(y-this.props.chunkPosition.y)+"px",
         }}>
-            <img src={this.props.object.image} alt={this.props.object.type} />
+            <img style={{width:`${s}px`, height:`${s}px`}} src={this.props.object.image} alt={this.props.object.type} />
         </div>
     }
 }
@@ -80,8 +98,10 @@ class Chunk extends React.Component {
             objectComponents.push(<GameObject
                 object={o}
                 key={o.id}
+                id={o.id}
                 size={this.SIZE}
                 chunkPosition={{x:this.props.data.x, y:this.props.data.y}}
+                objectEventBus={this.props.objectEventBus}
             />)
         })
         return objectComponents
@@ -222,6 +242,7 @@ class Chunks extends React.Component {
                 key={key}
                 playerPosition={this.playerPosition()}
                 data={chunkData}
+                objectEventBus={this.props.objectEventBus}
             />;
             chunks.push(chunk)
         })
