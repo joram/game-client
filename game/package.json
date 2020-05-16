@@ -17,8 +17,10 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "^3.4.1",
+    "react-websocket": "^2.1.0",
     "reactrpc": "^1.0.5",
-    "require": "^2.4.20"
+    "require": "^2.4.20",
+    "uuid": "^8.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

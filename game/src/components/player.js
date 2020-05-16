@@ -59,8 +59,6 @@ class Player extends React.Component {
         let y_units = Math.round(nextPlayerPosition.y/offset)
         nextPlayerPosition.x = x_units*offset
         nextPlayerPosition.y = y_units*offset
-        console.log(nextPlayerPosition)
-
 
         if(!isSolid){
             let state = this.state

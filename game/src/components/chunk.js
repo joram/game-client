@@ -45,9 +45,8 @@ class Square extends React.Component {
                 backgroundColor: color,
                 position: "absolute"
             }}>
-                ({p.x}, {p.y})
+                {/*({p.x}, {p.y})*/}
             </div>
-        // </BaseObject>
     }
 }
 
@@ -69,11 +68,6 @@ class Chunk extends React.Component {
             />)
         })
         return pixels
-    }
-
-    isSolidAt(p) {
-        console.log("checking solid at ", p)
-        console.log(this.chunk)
     }
 
     objects(){
@@ -121,12 +115,27 @@ class Chunk extends React.Component {
 
 class Chunks extends React.Component {
 
+    CHUNKSIZE = 10
+
     state = {
         playerPosition: {x:-99, y:-99},
         chunkData: {},
     }
 
+    constructor(props) {
+        super(props);
+    }
+
     requestChunk(x, y) {
+        if (this.state.chunkData[`${x}_${y}`] !== undefined ){
+            return
+        }
+
+        // so we don't request again
+        let state = this.state
+        state.chunkData[`${x}_${y}`] = {pixels:[], objects:[]}
+        this.setState(state)
+
         let url = `http://localhost:2303/chunks?x=${x}&y=${y}`
         fetch(url)
             .then(res => res.json())
@@ -137,11 +146,34 @@ class Chunks extends React.Component {
             });
     }
 
-    constructor(props) {
-        super(props);
-        this.props = props;
-        this.requestChunk(0,0)
-        this.requestChunk(-5,-5)
+    updateChunks(){
+        let size = 50;
+        let squaresTall = Math.ceil(window.innerHeight/size);
+        let squaresWide = Math.ceil(window.innerWidth/size);
+
+        let pp = this.playerPosition()
+        let minX = Math.floor(pp.x - squaresWide/2)
+        let minY = Math.floor(pp.y - squaresTall/2)
+        let maxX = Math.ceil(pp.x + squaresWide/2)
+        let maxY = Math.ceil(pp.y + squaresTall/2)
+
+        minX = minX - minX%this.CHUNKSIZE - this.CHUNKSIZE
+        minY = minY - minY%this.CHUNKSIZE - this.CHUNKSIZE
+        maxX = maxX + maxX%this.CHUNKSIZE + this.CHUNKSIZE
+        maxY = maxY + maxY%this.CHUNKSIZE + this.CHUNKSIZE
+
+        let chunksWide = Math.ceil((maxX-minX)/this.CHUNKSIZE)
+        let chunksTall = Math.ceil((maxY-minY)/this.CHUNKSIZE)
+
+        let xIndex = [...Array(chunksWide).keys()]
+        let yIndex = [...Array(chunksTall).keys()]
+        xIndex.forEach(x => {
+            yIndex.forEach(y => {
+                if (this.state.chunkData[`${x}_${y}`] === undefined ){
+                    this.requestChunk(minX+x*this.CHUNKSIZE,minY+y*this.CHUNKSIZE)
+                }
+           })
+        })
     }
 
     playerPosition() {
@@ -149,16 +181,28 @@ class Chunks extends React.Component {
     }
 
     isSolidAt(p){
-        let x = Math.floor(p.x/5)*5
-        let y = Math.floor(p.y/5)*5
-        let chunk = this.state.chunkData[`${x}_${y}`]
 
+        let x = Math.floor(p.x/this.CHUNKSIZE)*this.CHUNKSIZE
+        let y = Math.floor(p.y/this.CHUNKSIZE)*this.CHUNKSIZE
+        let chunk = this.state.chunkData[`${x}_${y}`]
+        if(chunk === undefined) {
+            return false
+        }
         let solid = false
 
         chunk.pixels.forEach(pixel => {
             if(Math.ceil(p.x) === pixel.x && Math.ceil(p.y) === pixel.y){
-                console.log("considering", pixel)
-                if(pixel.g > 180){ solid = true }
+                if(pixel.g > 180){
+                    solid = true
+                }
+            }
+        })
+
+        chunk.objects.forEach(object => {
+            if(Math.ceil(p.x) === object.x && Math.ceil(p.y) === object.y){
+                 if(object.solid){
+                    solid = true
+                }
             }
         })
 
@@ -166,6 +210,7 @@ class Chunks extends React.Component {
     }
 
     render() {
+        this.updateChunks()
 
         let chunks = [];
         let keys = Object.keys(this.state.chunkData)
