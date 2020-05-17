@@ -59,8 +59,13 @@ class Objects extends React.Component {
 
     componentDidMount(){
         this.props.objectEventBus.on("object-update", object => {
+            console.log(object)
             let state = this.state
-            state.objects[object.id] = object
+            if (object.action === "remove") {
+                delete state.objects[object.id]
+            } else {
+                state.objects[object.id] = object
+            }
             this.setState(state)
         })
     }

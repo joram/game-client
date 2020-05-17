@@ -22,15 +22,16 @@ class Player extends React.Component {
         nextPlayerPosition: {x: 0, y: 0}
     }
 
-    ws = new WebSocket("ws://localhost:2303/objects")
 
     sendPlayerCoordinates(){
-        let s = `{"x":"${this.state.playerPosition.x}", "y":"${this.state.playerPosition.y}"}`
+        let s = `{"x":${this.state.playerPosition.x}, "y":${this.state.playerPosition.y}}`
         console.log(s)
         this.ws.send(s)
     }
 
     componentDidMount() {
+        this.ws = new WebSocket("ws://localhost:2303/objects")
+
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected to objects ws')
@@ -111,10 +112,10 @@ class Player extends React.Component {
 
     render(){
         return <>
-            <Circle
-                x={this.state.playerPosition.x}
-                y={this.state.playerPosition.y}
-                playerPosition={this.state.playerPosition} size={this.props.size}/>
+            {/*<Circle*/}
+            {/*    x={this.state.playerPosition.x}*/}
+            {/*    y={this.state.playerPosition.y}*/}
+            {/*    playerPosition={this.state.playerPosition} size={this.props.size}/>*/}
             <KeyboardEventHandler
                 handleKeys={["left", "right", "up", "down", "w", "a", "s", "d"]}
                 onKeyEvent={(key, e) => {
