@@ -49,7 +49,7 @@ class Player extends React.Component {
     }
 
     movePlayer(key, e) {
-        let offset = 0.2
+        let offset = 1
         let nextPlayerPosition = {x: this.state.playerPosition.x, y: this.state.playerPosition.y}
 
         function move(position, key, offset) {
@@ -73,7 +73,8 @@ class Player extends React.Component {
             nextPlayerPosition = move(nextPlayerPosition, key, 1)
         }
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
-        let isSolid = this.props.chunks.current.isSolidAt(nextPlayerPosition)
+        let isSolid = this.props.background.current.isSolidAt(nextPlayerPosition)
+        isSolid = isSolid || this.props.objects.current.isSolidAt(nextPlayerPosition)
 
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
         if(["left", "a", "up", "w"].includes(key)) {
@@ -100,12 +101,13 @@ class Player extends React.Component {
             this.props.app.setState(as)
 
             this.sendPlayerCoordinates()
+            this.props.background.current.updateChunks()
         }
     }
 
     debouncedMovePlayer = _.debounce( (key, e, wait) => {
         this.movePlayer(key, e)
-    }, 150, {leading:true, maxWait:150})
+    }, 350, {leading:true, maxWait:350})
 
     render(){
         return <>
