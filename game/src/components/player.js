@@ -1,19 +1,7 @@
-import BaseObject from "./base_object";
 import React from "react";
 import _ from "lodash";
 import KeyboardEventHandler from "react-keyboard-event-handler";
-
-function Circle(props) {
-    let s = props.size;
-    return <BaseObject x={props.x} y={props.y} playerPosition={props.playerPosition} zIndex={10}>
-        <div style={{
-            backgroundColor: "black",
-            borderRadius: "50%",
-            width: s + "px",
-            height: s + "px",
-        }} />
-    </BaseObject>
-}
+import {hostname, ws_prefix} from "../utils";
 
 class Player extends React.Component {
 
@@ -25,12 +13,13 @@ class Player extends React.Component {
 
     sendPlayerCoordinates(){
         let s = `{"x":${this.state.playerPosition.x}, "y":${this.state.playerPosition.y}}`
-        console.log(s)
         this.ws.send(s)
     }
 
     componentDidMount() {
-        this.ws = new WebSocket("ws://localhost:2303/objects")
+        let url = `${ws_prefix()}://${hostname()}/objects`
+        console.log(url)
+        this.ws = new WebSocket(url)
 
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console

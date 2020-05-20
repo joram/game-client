@@ -1,4 +1,5 @@
 import React from "react";
+import {hostname, ws_prefix} from "../utils";
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -11,7 +12,7 @@ class ChatMessage extends React.Component {
 
 class Chat extends React.Component {
     id = uuidv4();
-    ws = new WebSocket("ws://localhost:2303/chat")
+    ws = new WebSocket(`${ws_prefix()}://${hostname()}/chat`)
     state = {
         messages: [],
         text: "",
@@ -65,7 +66,7 @@ class Chat extends React.Component {
             top: "10px",
             left: "10px",
         }} >
-            <div style={{color:"white"}}>{this.id.substr(1, 6)}</div>
+            <div style={{color:"white"}}>you are {this.id.substr(1, 6)}</div>
             <div>
                 {messages}
             </div>

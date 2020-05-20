@@ -1,4 +1,5 @@
 import React from "react";
+import {hostname, http_prefix} from "../utils";
 
 class GameObject extends React.Component {
 
@@ -36,7 +37,21 @@ class GameObject extends React.Component {
         let offsetX = -this.props.playerPosition.x + Math.floor(squaresWide/2)
         let offsetY = -this.props.playerPosition.y + Math.floor(squaresTall/2)
 
+        let images = []
+        p.images.forEach(src => {
+            images.push(<img style={{
+                width: `${s}px`,
+                height: `${s}px`,
+                position: "absolute",
+                left: "0px",
+                top: "0px",
+            }}
+                 key={`${p.id}_img_${images.length}`}
+                 src={`${http_prefix()}://${hostname()}${src}`}
+                 alt={this.props.object.type}
+            />)
 
+        })
         return <div style={{
             position: "absolute",
             width: s+"px",
@@ -45,7 +60,7 @@ class GameObject extends React.Component {
             left:s*(x+offsetX)+"px",
             top:s*(y+offsetY)+"px",
         }}>
-            <img style={{width:`${s}px`, height:`${s}px`}} src={this.props.object.image} alt={this.props.object.type} />
+            {images}
         </div>
     }
 }
@@ -59,7 +74,7 @@ class Objects extends React.Component {
 
     componentDidMount(){
         this.props.objectEventBus.on("object-update", object => {
-            console.log(object)
+            console.log("update:", object)
             let state = this.state
             if (object.action === "remove") {
                 delete state.objects[object.id]

@@ -1,4 +1,5 @@
 import React from "react";
+import {hostname, http_prefix} from "../utils";
 
 class Square extends React.Component {
 
@@ -93,7 +94,7 @@ class Background extends React.Component {
         state.chunkData[`${x}_${y}`] = {pixels:[], objects:[]}
         this.setState(state)
 
-        let url = `http://localhost:2303/chunks?x=${x}&y=${y}`
+        let url = `${http_prefix()}://${hostname()}/chunks?x=${x}&y=${y}`
         fetch(url)
             .then(res => res.json())
             .then(chunkData => {
