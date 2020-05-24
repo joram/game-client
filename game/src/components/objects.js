@@ -105,16 +105,27 @@ class Objects extends React.Component {
             playerPosition = this.props.player.current.state.playerPosition
         }
 
-        let objects = [];
-        Object.values(this.state.objects).forEach(o => {
-            objects.push(<GameObject
+        function makeObject(o, size, objectEventBus) {
+            return <GameObject
                 object={o}
                 key={o.id}
                 id={o.id}
-                size={this.SIZE}
-                objectEventBus={this.props.objectEventBus}
+                size={size}
+                objectEventBus={objectEventBus}
                 playerPosition={playerPosition}
-            />)
+            />
+        }
+
+        let objects = [];
+        Object.values(this.state.objects).forEach(o => {
+            if(o.type !== "player"){
+                objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
+            }
+        })
+        Object.values(this.state.objects).forEach(o => {
+            if(o.type === "player"){
+                objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
+            }
         })
         return <div className="objects">
             {objects}

@@ -64,7 +64,7 @@ class Player extends React.Component {
         }
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
         let isSolid = this.props.background.current.isSolidAt(nextPlayerPosition)
-        isSolid = isSolid || this.props.objects.current.isSolidAt(nextPlayerPosition)
+        // isSolid = isSolid || this.props.objects.current.isSolidAt(nextPlayerPosition)
 
         nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
         if(["left", "a", "up", "w"].includes(key)) {
