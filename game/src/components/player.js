@@ -6,13 +6,19 @@ import {hostname, ws_prefix} from "../utils";
 class Player extends React.Component {
 
     state = {
+        id: undefined,
         playerPosition: {x: 0, y: 0},
-        nextPlayerPosition: {x: 0, y: 0}
+        // nextPlayerPosition: {x: 0, y: 0}
+    }
+
+    sendAccessToken(a,id){
+        let s = `{"accessToken":"${a}", "googleId":"${id}"}`
+        this.ws.send(s)
     }
 
 
-    sendPlayerCoordinates(){
-        let s = `{"x":${this.state.playerPosition.x}, "y":${this.state.playerPosition.y}}`
+    sendPlayerMove(d){
+        let s = `{"direction":"${d}"}`
         this.ws.send(s)
     }
 
@@ -24,13 +30,45 @@ class Player extends React.Component {
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected to objects ws')
-            this.sendPlayerCoordinates()
+            this.sendAccessToken(this.props.accessToken, this.props.googleId)
+            // this.sendPlayerCoordinates(this.state.playerPosition)
         }
 
         this.ws.onmessage = evt => {
             // on receiving a message, add it to the list of messages
             const message = JSON.parse(evt.data)
-            this.props.objectEventBus.emit("object-update", null, message)
+
+            let playerId = message["playerId"]
+            if(playerId !== undefined) {
+                let state = this.state
+                state.id = playerId
+                this.setState(state)
+
+            } else{
+                this.props.objectEventBus.emit("object-update", null, message)
+                if(message["id"] === this.state.id) {
+                    let state = this.state
+                    state.playerPosition.x = message["x"]
+                    state.playerPosition.y = message["y"]
+                    this.setState(state)
+                }
+
+            }
+
+
+            let state = this.state
+            let nextPlayerPosition = state.playerPosition
+            if(message.type==="player"){
+                state.playerPosition = nextPlayerPosition
+                state.nextPlayerPosition = nextPlayerPosition
+                this.setState(state)
+                this.props.background.current.updateChunks()
+
+                let as = this.props.app.state;
+                as.playerPosition = nextPlayerPosition
+                this.props.app.setState(as)
+            }
+
         }
 
         this.ws.onclose = () => {
@@ -39,60 +77,13 @@ class Player extends React.Component {
     }
 
     movePlayer(key, e) {
-        let offset = 1
-        let nextPlayerPosition = {x: this.state.playerPosition.x, y: this.state.playerPosition.y}
+        if (key === "w") key = "up"
+        if (key === "a") key = "left"
+        if (key === "s") key = "down"
+        if (key === "d") key = "right"
 
-        function move(position, key, offset) {
-            if (["left","a"].includes(key)) {
-                position.x -= offset
-            }
-            if (key === "right" || key === "d") {
-                position.x += offset
-            }
-            if (key === "up" || key === "w") {
-                position.y -= offset
-            }
-            if (key === "down" || key === "s") {
-                position.y += offset
-            }
-
-            return position
-        }
-
-        if(["left", "a", "up", "w"].includes(key)) {
-            nextPlayerPosition = move(nextPlayerPosition, key, 1)
-        }
-        nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
-        let isSolid = this.props.background.current.isSolidAt(nextPlayerPosition)
-        // isSolid = isSolid || this.props.objects.current.isSolidAt(nextPlayerPosition)
-
-        nextPlayerPosition = move(nextPlayerPosition, key, offset/2)
-        if(["left", "a", "up", "w"].includes(key)) {
-            nextPlayerPosition = move(nextPlayerPosition, key, -1)
-        }
-
-        let x_units = Math.round(nextPlayerPosition.x/offset)
-        let y_units = Math.round(nextPlayerPosition.y/offset)
-        nextPlayerPosition.x = x_units*offset
-        nextPlayerPosition.y = y_units*offset
-
-        if(!isSolid){
-            let state = this.state
-            state.playerPosition = nextPlayerPosition
-            state.nextPlayerPosition = nextPlayerPosition
-            this.setState(state)
-
-            // let ss = this.props.squares.current.state;
-            // ss.playerPosition = nextPlayerPosition
-            // this.props.squares.current.setState(ss)
-
-            let as = this.props.app.state;
-            as.playerPosition = nextPlayerPosition
-            this.props.app.setState(as)
-
-            this.sendPlayerCoordinates()
-            this.props.background.current.updateChunks()
-        }
+        this.props.background.current.updateChunks()
+        this.sendPlayerMove(key)
     }
 
     debouncedMovePlayer = _.debounce( (key, e, wait) => {
