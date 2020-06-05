@@ -37,6 +37,13 @@ class WebSocketConnection {
             })
     }
 
+    unequipItem(id) {
+        this.waitForConn(
+            () => {
+                this.ws.send(`{"unequip_item":${id}}`)
+            })
+    }
+
     async waitForConn(callback){
         while(this.ws.readyState !== 1){
             await sleep(1);

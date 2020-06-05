@@ -1,6 +1,6 @@
 import React from "react";
 import web_socket_connection from "../web_socket"
-import { DndProvider } from 'react-dnd'
+import { DndProvider,DragPreviewImage } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useDrag } from 'react-dnd'
 import { useDrop } from 'react-dnd'
@@ -14,6 +14,7 @@ const SlotTypes = {
     6: "s6",
     7: "s7",
     8: "s8",
+    BACKPACK: "backpack",
 }
 
 class PlayerEditor extends React.Component {
@@ -25,83 +26,37 @@ class PlayerEditor extends React.Component {
     render() {
         return <>
             <DndProvider  backend={HTML5Backend}>
-                <PlayerEditorEquip/>
-                <Backpack/>
+                <PlayerEditorEquip />
+                <Backpack />
             </DndProvider>
         </>
     }
 }
 
 
-class Backpack extends React.Component {
-
-    state = {
-        items: {}
-    }
-
-    // itemsToComponents(items) {
-    //     let item_components = []
-    //     items.forEach(item => {
-    //         const [{ isDragging }, drag, preview] = useDrag({
-    //             item: { type: ItemTypes.KNIGHT },
-    //             collect: (monitor) => ({
-    //                 isDragging: !!monitor.isDragging(),
-    //             }),
-    //         })
-    //
-    //         item_components.push(<div key={`item_${item.id}`}
-    //                         ref={drag}
-    //                         style={{
-    //                             border: "dashed thin black",
-    //                             opacity: isDragging ? 0.5 : 1,
-    //                         }}
-    //         >
-    //             <img src={item["equipped_image"]} alt={item["name"]}/>
-    //         </div>)
-    //     })
-    //     return item_components
-    // }
-
-    componentDidMount() {
-        web_socket_connection.objectEventBus.on("item", item => {
-            let state = this.state
-            if(item["is_carried"] && !item["is_equipped"]) {
-                state.items[item.id] = item
-            } else {
-                delete state.items[item.id]
-            }
-            this.setState(state)
-        })
-    }
-
-    render() {
-        let items = []
-        Object.values(this.state.items).forEach( item => {
-            items.push(<DraggableItem item={item} key={item.id}/>)
-        })
-        return <div style={{left:"300px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
-            {items}
-        </div>
-    }
-}
-
-
 function DraggableItem(props) {
-    const [{ isDragging }, drag] = useDrag({
+    const [{ isDragging }, drag, preview] = useDrag({
         item: { type: SlotTypes[props.item.allowed_slot] },
         end: (item, monitor) => {
             const dropResult = monitor.getDropResult()
             if (item && dropResult) {
-                web_socket_connection.equipItem(props.item.id)
+                if(dropResult.name === "backpack"){
+                    web_socket_connection.unequipItem(props.item.id)
+                } else {
+                    web_socket_connection.equipItem(props.item.id)
+                }
             }
         },
         collect: (monitor) => ({
             isDragging: monitor.isDragging(),
         }),
     })
-    return <div ref={drag} style={{...props.style}}>
-        <img src={props.item.dropped_image} alt={props.item.name} />
-    </div>
+    return <>
+        <DragPreviewImage connect={preview} src={props.item.dropped_image} />
+        <div ref={drag} style={{...props.style}}>
+            <img src={props.item.dropped_image} alt={props.item.name} />
+        </div>
+    </>
 }
 
 
@@ -124,19 +79,81 @@ function ItemSlot(props) {
 
     let item = null
     if(props.item !== undefined) {
-        item = <DraggableItem item={props.item} style={{top:"7px", right:"5px", position:"absolute"}}/>
+        item = <DraggableItem item={props.item} style={{...props.style}}/>
     }
 
-    return <div ref={drop} style={{...props.style, backgroundColor }}>
-        <img style={{
-            width:"50px",
-            height: "50px",
-        }}
-             src="http://localhost:2305/images/gui/tab_unselected.png"
-             alt={`slot ${props.slot}`}
-        />
+    return <>
+        <div ref={drop} style={{...props.style, backgroundColor }}>
+            <img style={{
+                width:"50px",
+                height: "50px",
+            }}
+                 src="http://localhost:2305/images/gui/tab_unselected.png"
+                 alt={`slot ${props.slot}`}
+            />
+        </div>
         {item}
-    </div>
+    </>
+}
+
+
+function BackpackSlot(props) {
+    const [{ canDrop, isOver }, drop] = useDrop({
+        accept: Object.values(SlotTypes),
+        drop: () => ({ name: `backpack` }),
+        collect: (monitor) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+        }),
+    })
+    const isActive = canDrop && isOver
+    let backgroundColor = '#222'
+    if (isActive) {
+        backgroundColor = 'darkgreen'
+    } else if (canDrop) {
+        backgroundColor = 'darkkhaki'
+    }
+
+    let item = null
+
+    return <>
+        <div ref={drop} style={{width:"100%", height:"100%", border:"solid thin black", backgroundColor }}>
+        </div>
+        {item}
+    </>
+}
+
+
+class Backpack extends React.Component {
+
+    state = {
+        items: {}
+    }
+
+    componentDidMount() {
+        web_socket_connection.objectEventBus.on("item", item => {
+            let state = this.state
+            if(item["is_carried"] && !item["is_equipped"]) {
+                state.items[item.id] = item
+            } else {
+                delete state.items[item.id]
+            }
+            this.setState(state)
+        })
+    }
+
+    render() {
+        let items = []
+        Object.values(this.state.items).forEach( item => {
+            items.push(<DraggableItem item={item} key={item.id}/>)
+        })
+        return <div style={{left:"300px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
+            <BackpackSlot />
+            <div style={{position:"absolute", top:0, left:0}}>
+                {items}
+            </div>
+        </div>
+    }
 }
 
 
@@ -152,7 +169,7 @@ class PlayerEditorEquip extends React.Component {
             if(item["is_carried"] && item["is_equipped"]) {
                 state.items[item.equipped_slot] = item
             } else {
-                delete state.items[item.equipped_slot]
+                delete state.items[item.allowed_slot]
             }
             this.setState(state)
         })
