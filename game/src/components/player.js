@@ -8,11 +8,10 @@ class Player extends React.Component {
     state = {
         id: undefined,
         playerPosition: {x: 0, y: 0},
-        // nextPlayerPosition: {x: 0, y: 0}
     }
 
-    sendAccessToken(a,id){
-        let s = `{"accessToken":"${a}", "googleId":"${id}"}`
+    sendAccessToken(a,id, email,firstName, lastName){
+        let s = `{"accessToken":"${a}", "googleId":"${id}", "email":"${email}", "firstName":"${firstName}", "lastName":"${lastName}"}`
         this.ws.send(s)
     }
 
@@ -30,7 +29,7 @@ class Player extends React.Component {
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected to objects ws')
-            this.sendAccessToken(this.props.accessToken, this.props.googleId)
+            this.sendAccessToken(this.props.accessToken, this.props.googleId, this.props.email,this.props.firstName, this.props.lastName)
             // this.sendPlayerCoordinates(this.state.playerPosition)
         }
 

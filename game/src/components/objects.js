@@ -90,7 +90,6 @@ class Objects extends React.Component {
         Object.values(this.state.objects).forEach(object => {
             if(Math.ceil(p.x) === object.x && Math.ceil(p.y) === object.y){
                  solid = solid || object.solid
-                 console.log(object)
             }
         })
         console.log(solid)

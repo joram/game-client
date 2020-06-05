@@ -5,13 +5,17 @@ import Player from "./components/player";
 import Background from "./components/background";
 import Objects from "./components/objects";
 import Chat from "./components/chat";
-
+import PlayerEditor from "./components/player_editor";
+import web_socket_connection from "./web_socket"
 
 class App extends React.Component {
 
     state = {
         accessToken: null,
-        googleId: null
+        googleId: null,
+        email: "",
+        firstName: "",
+        lastName: "",
     }
 
     constructor(props) {
@@ -33,6 +37,10 @@ class App extends React.Component {
         let state = this.state
         state.accessToken = data.accessToken
         state.googleId = data.googleId
+        state.firstName = data.profileObj.givenName
+        state.lastName = data.profileObj.familyName
+        state.email = data.profileObj.email
+        web_socket_connection.sendAccessToken(state.accessToken, state.googleId, state.email, state.firstName, state.lastName)
         this.setState(state)
     }
 
@@ -58,6 +66,9 @@ class App extends React.Component {
                 objectEventBus={this.objectEventBus}
                 accessToken={this.state.accessToken}
                 googleId={this.state.googleId}
+                email={this.state.email}
+                firstName={this.state.firstName}
+                lastName={this.state.lastName}
             />
             <Background
                 size={size}
@@ -78,7 +89,17 @@ class App extends React.Component {
         if(this.state.accessToken === null){
             return this.renderLogin()
         }
-        return this.renderGame()
+        return <>
+            <PlayerEditor
+                player={this.player}
+                accessToken={this.state.accessToken}
+                googleId={this.state.googleId}
+                email={this.state.email}
+                firstName={this.state.firstName}
+                lastName={this.state.lastName}
+            />
+        </>
+        // return this.renderGame()
     }
 
 
