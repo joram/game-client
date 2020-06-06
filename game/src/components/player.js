@@ -1,7 +1,8 @@
 import React from "react";
 import _ from "lodash";
 import KeyboardEventHandler from "react-keyboard-event-handler";
-import {hostname, ws_prefix} from "../utils";
+import web_socket_connection from "../web_socket";
+
 
 class Player extends React.Component {
 
@@ -10,54 +11,25 @@ class Player extends React.Component {
         playerPosition: {x: 0, y: 0},
     }
 
-    sendAccessToken(a,id, email,firstName, lastName){
-        let s = `{"accessToken":"${a}", "googleId":"${id}", "email":"${email}", "firstName":"${firstName}", "lastName":"${lastName}"}`
-        this.ws.send(s)
-    }
-
-
-    sendPlayerMove(d){
-        let s = `{"direction":"${d}"}`
-        this.ws.send(s)
-    }
 
     componentDidMount() {
-        let url = `${ws_prefix()}://${hostname()}/objects`
-        console.log(url)
-        this.ws = new WebSocket(url)
+        web_socket_connection.objectEventBus.on("player_id", (msg) => {
+            let state = this.state
+            state.id = msg["playerId"]
+            this.setState(state)
+        })
 
-        this.ws.onopen = () => {
-            // on connecting, do nothing but log it to the console
-            console.log('connected to objects ws')
-            this.sendAccessToken(this.props.accessToken, this.props.googleId, this.props.email,this.props.firstName, this.props.lastName)
-            // this.sendPlayerCoordinates(this.state.playerPosition)
-        }
-
-        this.ws.onmessage = evt => {
-            // on receiving a message, add it to the list of messages
-            const message = JSON.parse(evt.data)
-
-            let playerId = message["playerId"]
-            if(playerId !== undefined) {
+        web_socket_connection.objectEventBus.on("monster", (msg) => {
+            if(msg["id"] === this.state.id) {
                 let state = this.state
-                state.id = playerId
+                state.playerPosition.x = msg["x"]
+                state.playerPosition.y = msg["y"]
                 this.setState(state)
-
-            } else{
-                this.props.objectEventBus.emit("object-update", null, message)
-                if(message["id"] === this.state.id) {
-                    let state = this.state
-                    state.playerPosition.x = message["x"]
-                    state.playerPosition.y = message["y"]
-                    this.setState(state)
-                }
-
             }
-
 
             let state = this.state
             let nextPlayerPosition = state.playerPosition
-            if(message.type==="player"){
+            if(msg.type==="player"){
                 state.playerPosition = nextPlayerPosition
                 state.nextPlayerPosition = nextPlayerPosition
                 this.setState(state)
@@ -67,22 +39,20 @@ class Player extends React.Component {
                 as.playerPosition = nextPlayerPosition
                 this.props.app.setState(as)
             }
-
-        }
-
-        this.ws.onclose = () => {
-            console.log('disconnected')
-        }
+        })
     }
 
     movePlayer(key, e) {
-        if (key === "w") key = "up"
-        if (key === "a") key = "left"
-        if (key === "s") key = "down"
-        if (key === "d") key = "right"
-
-        this.props.background.current.updateChunks()
-        this.sendPlayerMove(key)
+        if (key === "e") {
+            this.props.app.setPage("inventory")
+        } else {
+            if (key === "w") key = "up"
+            if (key === "a") key = "left"
+            if (key === "s") key = "down"
+            if (key === "d") key = "right"
+            this.props.background.current.updateChunks()
+            web_socket_connection.sendPlayerMove(key)
+        }
     }
 
     debouncedMovePlayer = _.debounce( (key, e, wait) => {
@@ -91,12 +61,8 @@ class Player extends React.Component {
 
     render(){
         return <>
-            {/*<Circle*/}
-            {/*    x={this.state.playerPosition.x}*/}
-            {/*    y={this.state.playerPosition.y}*/}
-            {/*    playerPosition={this.state.playerPosition} size={this.props.size}/>*/}
             <KeyboardEventHandler
-                handleKeys={["left", "right", "up", "down", "w", "a", "s", "d"]}
+                handleKeys={["left", "right", "up", "down", "w", "a", "s", "d", "e"]}
                 onKeyEvent={(key, e) => {
                     this.debouncedMovePlayer(key, e, 100)
                 }}

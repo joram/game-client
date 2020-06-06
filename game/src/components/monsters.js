@@ -1,33 +1,34 @@
 import React from "react";
 import {hostname, http_prefix} from "../utils";
+import web_socket_connection from "../web_socket";
 
-class GameObject extends React.Component {
+class Monster extends React.Component {
 
     state = {
-        object: {x:0, y:0}
+        monster: {x:0, y:0}
     }
 
     isSolid(){
-        return this.props.object.solid
+        return this.props.monster.solid
     }
 
     constructor(props) {
         super(props);
-        this.state.object = props.object
+        this.state.monster = props.monster
     }
 
     componentDidMount(){
-        this.props.objectEventBus.on("object-update", object => {
-            if(this.props.id === object.id){
+        web_socket_connection.objectEventBus.on("monster", monster => {
+            if(this.props.id === monster.id){
                 let state = this.state
-                state.object = object
+                state.monster = monster
                 this.setState(state)
             }
         })
     }
 
     render() {
-        let p = this.state.object
+        let p = this.state.monster
         let s = this.props.size
         let x = p.x
         let y = p.y
@@ -48,7 +49,7 @@ class GameObject extends React.Component {
             }}
                  key={`${p.id}_img_${images.length}`}
                  src={`${http_prefix()}://${hostname()}${src}`}
-                 alt={this.props.object.type}
+                 alt={this.props.monster.type}
             />)
 
         })
@@ -65,21 +66,20 @@ class GameObject extends React.Component {
     }
 }
 
-class Objects extends React.Component {
+class Monsters extends React.Component {
     SIZE = 50
 
     state = {
-        objects: {}
+        monsters: {}
     }
 
     componentDidMount(){
-        this.props.objectEventBus.on("object-update", object => {
-            console.log("update:", object)
+        web_socket_connection.objectEventBus.on("monster", object => {
             let state = this.state
             if (object.action === "remove") {
-                delete state.objects[object.id]
+                delete state.monsters[object.id]
             } else {
-                state.objects[object.id] = object
+                state.monsters[object.id] = object
             }
             this.setState(state)
         })
@@ -87,9 +87,9 @@ class Objects extends React.Component {
 
     isSolidAt(p){
         let solid = false
-        Object.values(this.state.objects).forEach(object => {
-            if(Math.ceil(p.x) === object.x && Math.ceil(p.y) === object.y){
-                 solid = solid || object.solid
+        Object.values(this.state.monsters).forEach(monster => {
+            if(Math.ceil(p.x) === monster.x && Math.ceil(p.y) === monster.y){
+                 solid = solid || monster.solid
             }
         })
         console.log(solid)
@@ -104,8 +104,8 @@ class Objects extends React.Component {
         }
 
         function makeObject(o, size, objectEventBus) {
-            return <GameObject
-                object={o}
+            return <Monster
+                monster={o}
                 key={o.id}
                 id={o.id}
                 size={size}
@@ -115,12 +115,12 @@ class Objects extends React.Component {
         }
 
         let objects = [];
-        Object.values(this.state.objects).forEach(o => {
+        Object.values(this.state.monsters).forEach(o => {
             if(o.type !== "player"){
                 objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
             }
         })
-        Object.values(this.state.objects).forEach(o => {
+        Object.values(this.state.monsters).forEach(o => {
             if(o.type === "player"){
                 objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
             }
@@ -133,4 +133,4 @@ class Objects extends React.Component {
 
 }
 
-export default Objects
+export default Monsters

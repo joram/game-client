@@ -44,6 +44,13 @@ class WebSocketConnection {
             })
     }
 
+    dropItem(id) {
+        this.waitForConn(
+            () => {
+                this.ws.send(`{"drop_item":${id}}`)
+            })
+    }
+
     async waitForConn(callback){
         while(this.ws.readyState !== 1){
             await sleep(1);
@@ -52,11 +59,22 @@ class WebSocketConnection {
     }
 
     processMessage(msg) {
-        console.log("received msg on generic ws:", msg)
-
         // item
         if(msg["equipped_image"] !== undefined){
             this.objectEventBus.emit("item", null, msg)
+        }
+
+        // player-id
+        else if(msg["playerId"] !== undefined){
+            this.objectEventBus.emit("player_id", null, msg)
+        }
+
+        // monster update
+        else if(msg["type"] !== undefined){
+            this.objectEventBus.emit("monster", null, msg)
+
+        } else {
+            console.log("unknown msg", msg)
         }
 
     }
