@@ -4,6 +4,7 @@ import './App.css';
 import Player from "./components/player";
 import Background from "./components/background";
 import Monsters from "./components/monsters";
+import Items from "./components/items";
 import Chat from "./components/chat";
 import PlayerEditor from "./components/player_editor";
 import web_socket_connection from "./web_socket"
@@ -22,7 +23,8 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.background = React.createRef();
-        this.objects = React.createRef();
+        this.monsters = React.createRef();
+        this.items = React.createRef();
         this.player = React.createRef();
         // this.objectEventBus = require('js-event-bus')();
     }
@@ -65,19 +67,6 @@ class App extends React.Component {
     renderGame() {
         let size = 50;
         return <>
-            <Player
-                size={size}
-                background={this.background}
-                objects={this.objects}
-                ref={this.player}
-                app={this}
-                // objectEventBus={this.objectEventBus}
-                accessToken={this.state.accessToken}
-                googleId={this.state.googleId}
-                email={this.state.email}
-                firstName={this.state.firstName}
-                lastName={this.state.lastName}
-            />
             <Background
                 size={size}
                 ref={this.background}
@@ -85,11 +74,27 @@ class App extends React.Component {
             />
             <Monsters
                 size={size}
-                // objectEventBus={this.objectEventBus}
                 player={this.player}
-                ref={this.objects}
+                ref={this.monsters}
             />
-            <Chat/>
+            <Items
+                size={size}
+                player={this.player}
+                ref={this.items}
+            />
+            <Player
+                size={size}
+                background={this.background}
+                objects={this.monsters}
+                ref={this.player}
+                app={this}
+                accessToken={this.state.accessToken}
+                googleId={this.state.googleId}
+                email={this.state.email}
+                firstName={this.state.firstName}
+                lastName={this.state.lastName}
+            />
+            {/*<Chat/>*/}
         </>;
     }
 

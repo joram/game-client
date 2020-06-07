@@ -23,6 +23,15 @@ class WebSocketConnection {
 
     }
 
+    sendFullStateRequest(){
+        this.waitForConn(
+            () => {
+                this.ws.send(`{"full_state":"please"}`)
+            }
+        )
+
+    }
+
     sendPlayerMove(d){
         this.waitForConn(
             () => {
@@ -61,21 +70,25 @@ class WebSocketConnection {
     processMessage(msg) {
         // item
         if(msg["equipped_image"] !== undefined){
+            console.log("item", msg)
             this.objectEventBus.emit("item", null, msg)
+            return
         }
 
         // player-id
-        else if(msg["playerId"] !== undefined){
+        if(msg["playerId"] !== undefined){
             this.objectEventBus.emit("player_id", null, msg)
+            return
         }
 
         // monster update
-        else if(msg["type"] !== undefined){
+        if(msg["type"] !== undefined){
+            console.log("monster", msg)
             this.objectEventBus.emit("monster", null, msg)
-
-        } else {
-            console.log("unknown msg", msg)
+            return
         }
+
+        console.log("unknown msg", msg)
 
     }
 

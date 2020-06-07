@@ -10,16 +10,27 @@ class Player extends React.Component {
         id: undefined,
         playerPosition: {x: 0, y: 0},
     }
+    is_mounted = false
 
-
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
     componentDidMount() {
+        this.is_mounted = true
+        web_socket_connection.sendFullStateRequest()
+        console.log("player", this.state.id, " pos is", this.state.playerPosition)
         web_socket_connection.objectEventBus.on("player_id", (msg) => {
+            if(!this.is_mounted)
+                return
+
             let state = this.state
             state.id = msg["playerId"]
             this.setState(state)
         })
 
         web_socket_connection.objectEventBus.on("monster", (msg) => {
+            if(!this.is_mounted) return
+
             if(msg["id"] === this.state.id) {
                 let state = this.state
                 state.playerPosition.x = msg["x"]

@@ -7,6 +7,7 @@ class Monster extends React.Component {
     state = {
         monster: {x:0, y:0}
     }
+    is_mounted = false
 
     isSolid(){
         return this.props.monster.solid
@@ -17,8 +18,13 @@ class Monster extends React.Component {
         this.state.monster = props.monster
     }
 
-    componentDidMount(){
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
+    componentDidMount() {
+        this.is_mounted = true
         web_socket_connection.objectEventBus.on("monster", monster => {
+            if(!this.is_mounted) return
             if(this.props.id === monster.id){
                 let state = this.state
                 state.monster = monster
@@ -53,11 +59,16 @@ class Monster extends React.Component {
             />)
 
         })
+        let z = 0
+        if(this.props.monster.type==="player"){
+            z = 10
+        }
+
         return <div style={{
             position: "absolute",
             width: s+"px",
             height: s+"px",
-            zIndex: this.props.zIndex,
+            zIndex: z,
             left:s*(x+offsetX)+"px",
             top:s*(y+offsetY)+"px",
         }}>
@@ -72,9 +83,16 @@ class Monsters extends React.Component {
     state = {
         monsters: {}
     }
+    is_mounted = false
 
-    componentDidMount(){
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
+    componentDidMount() {
+        this.is_mounted = true
         web_socket_connection.objectEventBus.on("monster", object => {
+            if(!this.is_mounted) return
+
             let state = this.state
             if (object.action === "remove") {
                 delete state.monsters[object.id]
@@ -103,13 +121,12 @@ class Monsters extends React.Component {
             playerPosition = this.props.player.current.state.playerPosition
         }
 
-        function makeObject(o, size, objectEventBus) {
+        function makeObject(o, size) {
             return <Monster
                 monster={o}
                 key={o.id}
                 id={o.id}
                 size={size}
-                objectEventBus={objectEventBus}
                 playerPosition={playerPosition}
             />
         }
@@ -117,12 +134,12 @@ class Monsters extends React.Component {
         let objects = [];
         Object.values(this.state.monsters).forEach(o => {
             if(o.type !== "player"){
-                objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
+                objects.push(makeObject(o, this.SIZE))
             }
         })
         Object.values(this.state.monsters).forEach(o => {
             if(o.type === "player"){
-                objects.push(makeObject(o, this.SIZE, this.props.objectEventBus))
+                objects.push(makeObject(o, this.SIZE))
             }
         })
         return <div className="objects">

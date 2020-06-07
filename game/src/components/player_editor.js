@@ -174,9 +174,15 @@ class Backpack extends React.Component {
     state = {
         items: {}
     }
+    is_mounted = false
 
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
     componentDidMount() {
+        this.is_mounted = true
         web_socket_connection.objectEventBus.on("item", item => {
+            if(!this.is_mounted) return
             let state = this.state
             if(item["is_carried"] && !item["is_equipped"]) {
                 state.items[item.id] = item
@@ -206,9 +212,15 @@ class PlayerEditorEquip extends React.Component {
     state = {
         items: {}
     }
+    is_mounted = false
 
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
     componentDidMount() {
+        this.is_mounted = true
         web_socket_connection.objectEventBus.on("item", item => {
+            if(!this.is_mounted) return
             let state = this.state
             if(item["is_carried"] && item["is_equipped"]) {
                 state.items[item.equipped_slot] = item
@@ -269,9 +281,15 @@ class Ground extends React.Component {
     state = {
         items: {}
     }
+    is_mounted = false
 
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
     componentDidMount() {
+        this.is_mounted = true
         web_socket_connection.objectEventBus.on("item", item => {
+            if(!this.is_mounted) return
             let state = this.state
             if(!item["is_carried"]) {
                 state.items[item.equipped_slot] = item
