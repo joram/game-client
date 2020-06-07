@@ -68,23 +68,27 @@ class WebSocketConnection {
     }
 
     processMessage(msg) {
+
         // item
         if(msg["equipped_image"] !== undefined){
-            console.log("item", msg)
             this.objectEventBus.emit("item", null, msg)
             return
         }
 
         // player-id
         if(msg["playerId"] !== undefined){
+            player_id = msg.playerId
             this.objectEventBus.emit("player_id", null, msg)
             return
         }
 
         // monster update
         if(msg["type"] !== undefined){
-            console.log("monster", msg)
             this.objectEventBus.emit("monster", null, msg)
+            if(msg.id === player_id){
+                let p = {x:msg.x, y:msg.y}
+                this.objectEventBus.emit("player_position", null, p)
+            }
             return
         }
 
@@ -114,7 +118,7 @@ class WebSocketConnection {
     }
 }
 
-
+let player_id = null
 let web_socket_connection = new WebSocketConnection()
 
 export default web_socket_connection

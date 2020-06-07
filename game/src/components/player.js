@@ -3,13 +3,8 @@ import _ from "lodash";
 import KeyboardEventHandler from "react-keyboard-event-handler";
 import web_socket_connection from "../web_socket";
 
-
 class Player extends React.Component {
 
-    state = {
-        id: undefined,
-        playerPosition: {x: 0, y: 0},
-    }
     is_mounted = false
 
     componentWillUnmount() {
@@ -18,39 +13,6 @@ class Player extends React.Component {
     componentDidMount() {
         this.is_mounted = true
         web_socket_connection.sendFullStateRequest()
-        console.log("player", this.state.id, " pos is", this.state.playerPosition)
-        web_socket_connection.objectEventBus.on("player_id", (msg) => {
-            if(!this.is_mounted)
-                return
-
-            let state = this.state
-            state.id = msg["playerId"]
-            this.setState(state)
-        })
-
-        web_socket_connection.objectEventBus.on("monster", (msg) => {
-            if(!this.is_mounted) return
-
-            if(msg["id"] === this.state.id) {
-                let state = this.state
-                state.playerPosition.x = msg["x"]
-                state.playerPosition.y = msg["y"]
-                this.setState(state)
-            }
-
-            let state = this.state
-            let nextPlayerPosition = state.playerPosition
-            if(msg.type==="player"){
-                state.playerPosition = nextPlayerPosition
-                state.nextPlayerPosition = nextPlayerPosition
-                this.setState(state)
-                this.props.background.current.updateChunks()
-
-                let as = this.props.app.state;
-                as.playerPosition = nextPlayerPosition
-                this.props.app.setState(as)
-            }
-        })
     }
 
     movePlayer(key, e) {
@@ -78,9 +40,8 @@ class Player extends React.Component {
                     this.debouncedMovePlayer(key, e, 100)
                 }}
             />
-            { this.props.children }
         </>
     }
 }
 
-export default Player
+export {Player}

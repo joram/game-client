@@ -2,6 +2,7 @@ import React from "react";
 import {hostname, http_prefix} from "../utils";
 import web_socket_connection from "../web_socket";
 
+
 class Monster extends React.Component {
 
     state = {
@@ -81,7 +82,8 @@ class Monsters extends React.Component {
     SIZE = 50
 
     state = {
-        monsters: {}
+        monsters: {},
+        playerPosition: {x:0, y:0},
     }
     is_mounted = false
 
@@ -90,17 +92,25 @@ class Monsters extends React.Component {
     }
     componentDidMount() {
         this.is_mounted = true
-        web_socket_connection.objectEventBus.on("monster", object => {
+        web_socket_connection.objectEventBus.on("monster", m => {
             if(!this.is_mounted) return
 
             let state = this.state
-            if (object.action === "remove") {
-                delete state.monsters[object.id]
+            if (m.action === "remove") {
+                delete state.monsters[m.id]
             } else {
-                state.monsters[object.id] = object
+                state.monsters[m.id] = m
             }
             this.setState(state)
         })
+
+        web_socket_connection.objectEventBus.on("player_position", (msg) => {
+            if(!this.is_mounted) return
+            let state = this.state
+            state.playerPosition = msg
+            this.setState(state)
+        })
+
     }
 
     isSolidAt(p){
@@ -110,17 +120,12 @@ class Monsters extends React.Component {
                  solid = solid || monster.solid
             }
         })
-        console.log(solid)
         return solid
     }
 
     render() {
 
-        let playerPosition = {x:0, y:0}
-        if(this.props.player.current !== null){
-            playerPosition = this.props.player.current.state.playerPosition
-        }
-
+        let playerPosition = this.state.playerPosition
         function makeObject(o, size) {
             return <Monster
                 monster={o}
@@ -142,7 +147,7 @@ class Monsters extends React.Component {
                 objects.push(makeObject(o, this.SIZE))
             }
         })
-        return <div className="objects">
+        return <div className="monsters">
             {objects}
         </div>
     }

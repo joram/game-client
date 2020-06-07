@@ -1,16 +1,14 @@
 import React from "react";
 import {hostname, http_prefix} from "../utils";
+import web_socket_connection from "../web_socket";
 
 class Square extends React.Component {
-
-    isSolid(){
-        return this.props.pixel.g > 180
-    }
 
     render() {
         let p = this.props.pixel
         let color = `rgb(${p.r}, ${p.g}, ${p.b})`
-        if (this.isSolid()) {
+        let isSolid = this.props.pixel.g > 180
+        if (isSolid) {
             color = `rgb(0, 80, 0)`
         }
         return <div style={{
@@ -20,16 +18,13 @@ class Square extends React.Component {
                 top: `${50*(p.y-this.props.chunkPosition.y)}px`,
                 backgroundColor: color,
                 position: "absolute"
-            }}>
-                {/*({p.x}, {p.y})*/}
-            </div>
+            }}/>
     }
 }
 
 class Chunk extends React.Component {
     SIZE = 50;
     chunk = {}
-    state = {}
 
     backgroundSquares() {
         let pixels = []
@@ -40,7 +35,6 @@ class Chunk extends React.Component {
                 key={pixel.x+"_"+pixel.y}
                 pixel={pixel}
                 chunkPosition={{x:this.props.data.x, y:this.props.data.y}}
-                playerPosition={this.props.playerPosition}
             />)
         })
         return pixels
@@ -76,12 +70,26 @@ class Background extends React.Component {
     CHUNKSIZE = 10
 
     state = {
-        playerPosition: {x:-99, y:-99},
         chunkData: {},
+        playerPosition: {x:0, y:0},
+    }
+    is_mounted = false
+
+    componentWillUnmount() {
+        this.is_mounted = false
     }
 
     componentDidMount(props) {
+        this.is_mounted = true
         this.updateChunks()
+        web_socket_connection.objectEventBus.on("player_position", (msg) => {
+            if(!this.is_mounted) return
+            let state = this.state
+            state.playerPosition = msg
+            this.setState(state)
+            this.updateChunks()
+        })
+
     }
 
     requestChunk(x, y) {
@@ -109,7 +117,7 @@ class Background extends React.Component {
         let squaresTall = Math.ceil(window.innerHeight/size);
         let squaresWide = Math.ceil(window.innerWidth/size);
 
-        let pp = this.playerPosition()
+        let pp = this.state.playerPosition
         let minX = Math.floor(pp.x - squaresWide/2)
         let minY = Math.floor(pp.y - squaresTall/2)
         let maxX = Math.ceil(pp.x + squaresWide/2)
@@ -134,10 +142,6 @@ class Background extends React.Component {
         })
     }
 
-    playerPosition() {
-        return this.props.app.playerPosition()
-    }
-
     isSolidAt(p){
 
         let x = Math.floor(p.x/this.CHUNKSIZE)*this.CHUNKSIZE
@@ -156,29 +160,21 @@ class Background extends React.Component {
             }
         })
 
-        // chunk.objects.forEach(object => {
-        //     if(Math.ceil(p.x) === object.x && Math.ceil(p.y) === object.y){
-        //          if(object.solid){
-        //             solid = true
-        //         }
-        //     }
-        // })
-
         return solid
     }
 
     render() {
         let chunks = [];
         let keys = Object.keys(this.state.chunkData)
+        let playerPosition = this.state.playerPosition
         keys.forEach(key => {
             let chunkData = this.state.chunkData[key]
             let chunk = <Chunk
                 x={chunkData.x}
                 y={chunkData.y}
                 key={key}
-                playerPosition={this.playerPosition()}
                 data={chunkData}
-                objectEventBus={this.props.objectEventBus}
+                playerPosition={playerPosition}
             />;
             chunks.push(chunk)
         })

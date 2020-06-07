@@ -1,11 +1,10 @@
 import React from 'react';
 import GoogleLogin from 'react-google-login';
 import './App.css';
-import Player from "./components/player";
+import {Player} from "./components/player";
 import Background from "./components/background";
 import Monsters from "./components/monsters";
 import Items from "./components/items";
-import Chat from "./components/chat";
 import PlayerEditor from "./components/player_editor";
 import web_socket_connection from "./web_socket"
 
@@ -26,14 +25,6 @@ class App extends React.Component {
         this.monsters = React.createRef();
         this.items = React.createRef();
         this.player = React.createRef();
-        // this.objectEventBus = require('js-event-bus')();
-    }
-
-    playerPosition() {
-        if(this.player.current===null){
-            return {x:0, y:0}
-        }
-        return this.player.current.state.playerPosition
     }
 
     loginSuccess(data){
@@ -74,18 +65,18 @@ class App extends React.Component {
             />
             <Monsters
                 size={size}
-                player={this.player}
+                // player={this.player}
                 ref={this.monsters}
             />
             <Items
                 size={size}
-                player={this.player}
+                // player={this.player}
                 ref={this.items}
             />
             <Player
                 size={size}
                 background={this.background}
-                objects={this.monsters}
+                items={this.items}
                 ref={this.player}
                 app={this}
                 accessToken={this.state.accessToken}
@@ -94,7 +85,6 @@ class App extends React.Component {
                 firstName={this.state.firstName}
                 lastName={this.state.lastName}
             />
-            {/*<Chat/>*/}
         </>;
     }
 

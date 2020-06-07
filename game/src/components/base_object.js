@@ -1,4 +1,5 @@
 import React from "react";
+import {PLAYER_POSITION} from "./player";
 
 class BaseObject extends React.Component {
 
@@ -8,8 +9,8 @@ class BaseObject extends React.Component {
         let size = 50;
         let squaresTall = Math.ceil(window.innerHeight/size);
         let squaresWide = Math.ceil(window.innerWidth/size);
-        let offsetX = -this.props.playerPosition.x + Math.floor(squaresWide/2)
-        let offsetY = -this.props.playerPosition.y + Math.floor(squaresTall/2)
+        let offsetX = -PLAYER_POSITION.x + Math.floor(squaresWide/2)
+        let offsetY = -PLAYER_POSITION.y + Math.floor(squaresTall/2)
         return <div style={{
             position: "absolute",
             width: size+"px",

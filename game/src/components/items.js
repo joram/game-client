@@ -2,10 +2,11 @@ import React from "react";
 import web_socket_connection from "../web_socket";
 import {hostname, http_prefix} from "../utils";
 
+
 class Item extends React.Component {
 
     state = {
-        item: {x: 0, y: 0}
+        item: {x: 0, y: 0},
     }
     is_mounted = false
 
@@ -71,7 +72,8 @@ class Items extends React.Component {
     SIZE = 50
 
     state = {
-        items: {}
+        items: {},
+        playerPosition: {x: 0, y: 0},
     }
     is_mounted = false
 
@@ -90,21 +92,26 @@ class Items extends React.Component {
             }
             this.setState(state)
         })
+
+        web_socket_connection.objectEventBus.on("player_position", (msg) => {
+            if(!this.is_mounted) return
+            let state = this.state
+            state.playerPosition = msg
+            this.setState(state)
+        })
+
     }
 
     render() {
-        let playerPosition = {x:0, y:0}
-        if(this.props.player.current !== null){
-            playerPosition = this.props.player.current.state.playerPosition
-        }
 
+        let playerPosition = this.state.playerPosition
         function makeObject(o, size) {
             return <Item
-                playerPosition={playerPosition}
                 item={o}
                 key={o.id}
                 id={o.id}
                 size={size}
+                playerPosition={playerPosition}
             />
         }
 
