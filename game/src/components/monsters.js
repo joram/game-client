@@ -61,7 +61,7 @@ class Monster extends React.Component {
 
         })
         let z = 0
-        if(this.props.monster.type==="player"){
+        if(this.props.monster.type==="player" && this.props.monster.health > 0){
             z = 10
         }
 

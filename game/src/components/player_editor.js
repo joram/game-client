@@ -22,12 +22,66 @@ const SlotTypes = {
 
 class PlayerEditor extends React.Component {
 
+    state = {
+        items: [],
+    }
+
     constructor(props) {
         super(props);
         web_socket_connection.sendBackpackRequest()
     }
+    is_mounted = false
+
+    componentWillUnmount() {
+        this.is_mounted = false
+    }
+    componentDidMount() {
+        this.is_mounted = true
+        web_socket_connection.objectEventBus.on("item", item => {
+            if (!this.is_mounted) return
+            let state = this.state
+            state.items[item.id] = item
+            this.setState(state)
+        })
+    }
+
+    equippedItems(){
+        let items = []
+        Object.values(this.state.items).forEach(item => {
+            console.log(item)
+            if(item.is_carried && item.is_equipped){
+                items.push(item)
+            }
+        })
+        console.log("equipped", items)
+        return items
+    }
+
+    backpackItems(){
+        let items = []
+        Object.values(this.state.items).forEach(item => {
+            if(item.is_carried && !item.is_equipped){
+                items.push(item)
+            }
+        })
+        console.log("backpack", items)
+        return items
+    }
+
+    groundItems(){
+        let items = []
+        Object.values(this.state.items).forEach(item => {
+            if(!item.is_carried && !item.is_equipped){
+                items.push(item)
+            }
+        })
+        console.log("ground", items)
+        return items
+    }
+
 
     render() {
+        console.log("all_items", this.state.items)
         return <>
             <div style={{textAlign:"center"}}>
                 <div style={{float:"left", width:"300px"}}>Equipped</div>
@@ -36,9 +90,9 @@ class PlayerEditor extends React.Component {
             </div>
             <div  style={{top:"20px", position: "absolute"}} >
                 <DndProvider backend={HTML5Backend}>
-                    <PlayerEditorEquip />
-                    <Backpack />
-                    <Ground />
+                    <PlayerEditorEquip items={this.equippedItems()} />
+                    <Backpack items={this.backpackItems()} />
+                    <Ground items={this.groundItems()} />
                 </DndProvider>
             </div>
             <KeyboardEventHandler
@@ -53,6 +107,7 @@ class PlayerEditor extends React.Component {
 
 
 function DraggableItem(props) {
+    console.log("draggable", props.item)
     const [{ isDragging }, drag, preview] = useDrag({
         item: { type: SlotTypes[props.item.allowed_slot] },
         end: (item, monitor) => {
@@ -169,151 +224,78 @@ function GroundSlot(props) {
     </>
 }
 
-class Backpack extends React.Component {
-
-    state = {
-        items: {}
-    }
-    is_mounted = false
-
-    componentWillUnmount() {
-        this.is_mounted = false
-    }
-    componentDidMount() {
-        this.is_mounted = true
-        web_socket_connection.objectEventBus.on("item", item => {
-            if(!this.is_mounted) return
-            let state = this.state
-            if(item["is_carried"] && !item["is_equipped"]) {
-                state.items[item.id] = item
-            } else {
-                delete state.items[item.id]
-            }
-            this.setState(state)
-        })
-    }
-
-    render() {
-        let items = []
-        Object.values(this.state.items).forEach( item => {
-            items.push(<DraggableItem item={item} key={item.id}/>)
-        })
-        return <div style={{left:"300px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
-            <BackpackSlot />
-            <div style={{position:"absolute", top:0, left:0}}>
-                {items}
-            </div>
+function Backpack(props) {
+    let items = []
+    Object.values(props.items).forEach( item => {
+        items.push(<DraggableItem item={item} key={item.id}/>)
+    })
+    return <div style={{left:"300px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
+        <BackpackSlot />
+        <div style={{position:"absolute", top:0, left:0}}>
+            {items}
         </div>
-    }
+    </div>
 }
 
-class PlayerEditorEquip extends React.Component {
-
-    state = {
-        items: {}
+function PlayerEditorEquip(props) {
+    let silhouette_style = {
+        position: "absolute",
+        width: "200px",
+        height: "200px",
+        left:"50px",
+        top: "40px"
     }
-    is_mounted = false
-
-    componentWillUnmount() {
-        this.is_mounted = false
-    }
-    componentDidMount() {
-        this.is_mounted = true
-        web_socket_connection.objectEventBus.on("item", item => {
-            if(!this.is_mounted) return
-            let state = this.state
-            if(item["is_carried"] && item["is_equipped"]) {
-                state.items[item.equipped_slot] = item
-            } else {
-                delete state.items[item.allowed_slot]
-            }
-            this.setState(state)
-        })
-    }
-
-    render() {
-        let silhouette_style = {
-            position: "absolute",
-            width: "200px",
-            height: "200px",
-            left:"50px",
-            top: "40px"
-        }
-        let items = []
-        Object.values(this.state.items).forEach(item => {
-            items.push(<img style={silhouette_style}
+    let items = {}
+    let equipped_items = []
+    Object.values(props.items).forEach(item => {
+        items[item.allowed_slot] = item
+        equipped_items.push(
+            <img style={silhouette_style}
                  src={`${http_prefix()}://${hostname()}/${item.equipped_image}`}
                  alt="silhouette"
-                 key={item.id}
-            />)
-        })
-        return <div style={{width:"300px", height:"290px", position:"absolute", border: "solid thin black"}}>
-            <img style={silhouette_style}
-                 src={`${http_prefix()}://${hostname()}/images/player/base/human_m.png`}
-                 alt="silhouette"
             />
-            {items}
+        )
+    })
 
-            <ItemSlot style={{position: "absolute", left: "0px"}} slot={1} item={this.state.items[1]}/>
-            <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={2} item={this.state.items[2]}/>
+    return <div style={{width:"300px", height:"290px", position:"absolute", border: "solid thin black"}}>
+        <img style={silhouette_style}
+             src={`${http_prefix()}://${hostname()}/images/player/base/human_m.png`}
+             alt="silhouette"
+        />
+        {equipped_items}
 
-            <div style={{position: "absolute", top:"80px", width:"100%"}}>
-                <ItemSlot style={{position: "absolute", left: "0px"}} slot={3} item={this.state.items[3]}/>
-                <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={4} item={this.state.items[4]}/>
-            </div>
+        <ItemSlot style={{position: "absolute", left: "0px"}} slot={1} item={items[1]}/>
+        <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={2} item={items[2]}/>
 
-            <div style={{position: "absolute", top:"160px", width:"100%"}}>
-                <ItemSlot style={{position: "absolute", left: "0px"}} slot={5}/>
-                <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={6}/>
-            </div>
-
-            <div style={{position: "absolute", top:"240px", width:"100%"}}>
-                <ItemSlot style={{position: "absolute", left: "0px"}} slot={7}/>
-                <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={8}/>
-            </div>
-
+        <div style={{position: "absolute", top:"80px", width:"100%"}}>
+            <ItemSlot style={{position: "absolute", left: "0px"}} slot={3} item={items[3]}/>
+            <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={4} item={items[4]}/>
         </div>
-    }
+
+        <div style={{position: "absolute", top:"160px", width:"100%"}}>
+            <ItemSlot style={{position: "absolute", left: "0px"}} slot={5}/>
+            <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={6}/>
+        </div>
+
+        <div style={{position: "absolute", top:"240px", width:"100%"}}>
+            <ItemSlot style={{position: "absolute", left: "0px"}} slot={7}/>
+            <ItemSlot style={{position: "absolute", transform: "scaleX(-1)", right: "0px"}} slot={8}/>
+        </div>
+
+    </div>
 }
 
-class Ground extends React.Component {
-
-    state = {
-        items: {}
-    }
-    is_mounted = false
-
-    componentWillUnmount() {
-        this.is_mounted = false
-    }
-    componentDidMount() {
-        this.is_mounted = true
-        web_socket_connection.objectEventBus.on("item", item => {
-            if(!this.is_mounted) return
-            let state = this.state
-            if(!item["is_carried"]) {
-                state.items[item.equipped_slot] = item
-            } else {
-                delete state.items[item.allowed_slot]
-                delete state.items[item.equipped_slot]
-                delete state.items[-1]
-            }
-            this.setState(state)
-        })
-    }
-
-    render() {
-        let items = []
-        Object.values(this.state.items).forEach( item => {
-            items.push(<DraggableItem item={item} key={item.id}/>)
-        })
-        return <div style={{left:"600px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
-            <GroundSlot />
-            <div style={{position:"absolute", top:0, left:0}}>
-                {items}
-            </div>
+function Ground(props){
+    let items = []
+    Object.values(props.items).forEach( item => {
+        items.push(<DraggableItem item={item} key={item.id}/>)
+    })
+    return <div style={{left:"600px", width: "300px", height: "290px", position: "absolute", border: "solid thin black"}}>
+        <GroundSlot />
+        <div style={{position:"absolute", top:0, left:0}}>
+            {items}
         </div>
-    }
+    </div>
 }
 
 export default PlayerEditor
